@@ -75,7 +75,8 @@ local function ApplyButton(name, rare)
 	shownAt = GetTime()
 	button:SetAttribute("macrotext", "/cleartarget\n/targetexact " .. name)
 	nameText:SetText(name)
-	infoText:SetText(("Level %s %s  -  click to target"):format(rare.level or "??", RareKind(rare)))
+	infoText:SetText(("Level %s %s  -  click to target%s"):format(rare.level or "??", RareKind(rare),
+		ns.db.mark and " and mark" or ""))
 	model:ClearModel()
 	if rare.id then
 		pcall(model.SetCreature, model, rare.id)  -- fails for creatures the client hasn't cached
@@ -112,7 +113,7 @@ button:SetScript("OnDragStop", button.StopMovingOrSizing)
 button:SetScript("OnEnter", function(self)
 	GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
 	GameTooltip:AddLine(shown or "RareAlert-Dungeons")
-	GameTooltip:AddLine("Left-click to target", 1, 1, 1)
+	GameTooltip:AddLine(ns.db.mark and "Left-click to target and mark" or "Left-click to target", 1, 1, 1)
 	GameTooltip:AddLine("Right-click to dismiss", 1, 1, 1)
 	GameTooltip:AddLine("Shift-drag to move", 1, 1, 1)
 	GameTooltip:Show()

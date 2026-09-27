@@ -7,6 +7,7 @@ local pairs, ipairs, wipe, tonumber = pairs, ipairs, wipe, tonumber
 local GetTime, TargetUnit, InCombatLockdown = GetTime, TargetUnit, InCombatLockdown
 local UnitExists, UnitName, UnitLevel, UnitGUID = UnitExists, UnitName, UnitLevel, UnitGUID
 local UnitIsDead, UnitPlayerControlled, UnitClassification = UnitIsDead, UnitPlayerControlled, UnitClassification
+local GetRaidTargetIndex, SetRaidTarget = GetRaidTargetIndex, SetRaidTarget
 
 ns.SCAN_INTERVAL = 0.5
 ns.REARM_SECONDS = 60     -- a rare must be out of range this long before it alerts again
@@ -16,8 +17,9 @@ ns.NEARBY_SECONDS = 2
 -- 0.5s later unless they win their spawn roll. A scan can catch that flicker, so a rare must stay
 -- in range this long before it alerts.
 ns.CONFIRM_SECONDS = 1.5
+ns.MARK = 3  -- raid target icon: diamond
 
-local DEFAULTS = { enabled = true, sound = true, flash = true, custom = {} }
+local DEFAULTS = { enabled = true, sound = true, flash = true, mark = true, custom = {} }
 
 local db
 local state = {}    -- [name] = { seen = time, since = sighting start, present = confirmed time, alerted = bool, killed = time }
@@ -115,13 +117,25 @@ local function NpcID(unit)
 	end
 end
 
+-- SetRaidTarget needs a unit token, and the scanner only knows names, so a rare gets its
+-- mark once it is your target (e.g. via the alert button) or mouseover
+local function Mark(unit)
+	if not db.mark or GetRaidTargetIndex(unit) == ns.MARK then return end  -- setting it again would clear it
+	if GetNumRaidMembers() > 0 and not IsRaidLeader() and not IsRaidOfficer() then return end
+	SetRaidTarget(unit, ns.MARK)
+end
+
 -- catches rares that are not in the list, e.g. world rares you mouse over
 local function CheckUnit(unit)
 	if not UnitExists(unit) or UnitIsDead(unit) or UnitPlayerControlled(unit) then return end
-	local class = UnitClassification(unit)
-	if class ~= "rare" and class ~= "rareelite" then return end
-
 	local name = UnitName(unit)
+	local class = UnitClassification(unit)
+	if class ~= "rare" and class ~= "rareelite" then
+		if db.custom[name] then Mark(unit) end  -- your own names need not be rares
+		return
+	end
+	Mark(unit)
+
 	local rare = watch[name] or ns.byName[name]
 	if not rare then
 		rare = { name = name, id = NpcID(unit), level = tostring(UnitLevel(unit)), elite = class == "rareelite" }
@@ -230,6 +244,7 @@ local HELP = {
 	"/rare on | off  -  turn scanning on or off",
 	"/rare sound  -  toggle the alert sound",
 	"/rare flash  -  toggle the screen flash",
+	"/rare mark  -  toggle marking rares with a diamond",
 	"/rare add <name>  -  also scan for this name everywhere",
 	"/rare remove <name>  -  stop scanning for a name you added",
 	"/rare test  -  show a test alert",
@@ -247,7 +262,7 @@ SlashCmdList.RAREALERT = function(input)
 		db.enabled = cmd == "on"
 		ns.Print("Scanning " .. OnOff(db.enabled))
 		ns.RefreshList()
-	elseif cmd == "sound" or cmd == "flash" then
+	elseif cmd == "sound" or cmd == "flash" or cmd == "mark" then
 		ns.Toggle(cmd)
 	elseif cmd == "add" and arg ~= "" then
 		db.custom[arg] = true
