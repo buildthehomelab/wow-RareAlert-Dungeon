@@ -34,10 +34,15 @@ over alert right away.
 Range is the client's visibility range, roughly 100 yards. Rares in a room you haven't reached yet
 won't show up until you're close.
 
-## Install
+## Requirements
+
+- A WoW 3.3.5a (12340) client. The built-in dungeon list matches rare names in English, so it needs an enUS or enGB client.
+- The built-in list is built from the [AzerothCore](https://www.azerothcore.org) world database, so it fits AzerothCore servers. The addon runs entirely in the client and needs nothing on the server.
+
+## Installation
 
 1. Download this repo (Code → Download ZIP) and extract it.
-2. Copy the inner `RareAlert-Dungeons` folder into `World of Warcraft/Interface/AddOns/`, so you end up with `Interface/AddOns/RareAlert-Dungeons/RareAlert-Dungeons.toc`.
+2. Copy the inner `RareAlert-Dungeons` folder into your `Interface/AddOns` folder (`World of Warcraft/Interface/AddOns/`), so you end up with `Interface/AddOns/RareAlert-Dungeons/RareAlert-Dungeons.toc`.
 3. Restart the game.
 
 Upgrading from the old `RareAlert` folder: delete `Interface/AddOns/RareAlert` first, or both copies will load and alert twice. Settings start fresh under the new name.
@@ -69,3 +74,21 @@ updates once combat ends, since the game locks secure buttons in combat.
   marking needs a unit, and the scan only knows the name. In a raid you need lead or assist to mark.
 - A rare that shares its name with another creature nearby can set off an alert.
 - The Fathom Stone, Dreadsteed and Karazhan rares only exist after their event or quest spawns them.
+
+## Troubleshooting
+
+- **Every alert fires twice:** you still have the old `RareAlert` folder in `Interface/AddOns`. Delete it, since both copies load.
+- **Alerts for the same rare from unitscan:** remove the dungeon names from unitscan; both addons alert for them.
+- **No dungeon rares listed or detected:** the dungeon list only matches English names (enUS/enGB). `/rare add <name>` works in any language.
+- **A rare in the next room doesn't alert:** the scan only reaches the client's visibility range, roughly 100 yards.
+- **No diamond marker in a raid:** marking needs raid lead or assist.
+
+## Credits
+
+The scanning technique (calling the protected `TargetUnit()` and watching for the blocked-action event) is the one [unitscan](https://github.com/shirsig/unitscan) by shirsig uses. The implementation here is separate. The rare list comes from the AzerothCore world database.
+
+Author: [buildthehomelab](https://github.com/buildthehomelab)
+
+## License
+
+Released under the [MIT License](LICENSE).
